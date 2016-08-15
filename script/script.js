@@ -16,20 +16,21 @@
 			for(var i = 0; photos.length > i; i++){
 				arrUrl.push('https://farm' + photos[i].farm + '.staticflickr.com/' + photos[i].server + '/' + photos[i].id + '_' + photos[i].secret+'.jpg');
 			}
-			gallary.setPage(arrUrl);
+			var gallary = new Gallary('gallary', {
+					imgInRow: 5,
+					rowClass: 'row clear-fix',
+					itemClass: 'item',
+					loadNewPageOnRow: 2,
+					activeClass: 'active',
+					cache: true,
+					firstPageArr: arrUrl
+				}, function(){
+			
+			});
 		}
 	}
 
-	var gallary = new Gallary('gallary', {
-		imgInRow: 5,
-		rowClass: 'row clear-fix',
-		itemClass: 'item',
-		loadNewPageOnRow: 2,
-		activeClass: 'active',
-		cache: true
-	}, function(){
-
-	});
+	
 	
 	
 

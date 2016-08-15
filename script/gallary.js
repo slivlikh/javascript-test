@@ -6,6 +6,11 @@
 		this.itemClass = params.itemClass;
 		this.loadNewPageOnRow = params.loadNewPageOnRow;
 		this.activeClass = params.activeClass;
+
+		Gallary.prototype.setPage.call(this, params.firstPageArr);
+		this.items = this.rootId.getElementsByClassName(this.itemClass);
+		this.items[0].classList.add(this.activeClass);
+
 		if(params.cache){
 			this.cache = {}; // кеш для всех страниц
 		}
@@ -23,7 +28,6 @@
 		};
 	}
 	Gallary.prototype.setPage = function(arrLinksImg){
-		console.log(arrLinksImg);
 		var html = "";
 		for(var i = 0; arrLinksImg.length > i; i++){
 			html += "<div class='"+ this.rowClass +"'>";
