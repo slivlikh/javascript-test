@@ -10,18 +10,44 @@
 		Gallary.prototype.setPage.call(this, params.firstPageArr);
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.items[0].classList.add(this.activeClass);
-
+		var activeItem = 0;
+		var _this = this;
 		if(params.cache){
 			this.cache = {}; // кеш для всех страниц
 		}
 		this.needNewPage = needNewPage; // вызывается когда нужно получить новые фото
 
-		document.addEventListener('keydown', changeActiveImg, false);
+		document.addEventListener('keydown', function (e){
+			switch(e.which){
+				case 37: {
+					_this.items[activeItem].classList.remove('active');
+					activeItem -=1
+					_this.items[activeItem].classList.add('active');
+				} break;
+				case 38: {
+					_this.items[activeItem].classList.remove('active');
+					activeItem -= _this.imgInRow
+					_this.items[activeItem].classList.add('active');
+				} break;
+				case 39: {
+					_this.items[activeItem].classList.remove('active');
+					activeItem +=1
+					_this.items[activeItem].classList.add('active');
+				} break;
+				case 40: {
+					_this.items[activeItem].classList.remove('active');
+					activeItem += _this.imgInRow
+					_this.items[activeItem].classList.add('active');
+				} break; 
+			}
+		}, false);
+
+
+
+
 		//document.addEventListener('scroll', changeActiveImg, false);
 
-		function changeActiveImg(e){
-			console.log(e);
-		}
+		
 
 		return {
 			setPage: window.Gallary.prototype.setPage.bind(this)
