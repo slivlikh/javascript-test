@@ -1,27 +1,36 @@
 (function(){
 	function Flickr(apiKey){
-		Flickr.testTypeInputParams('api key', apiKey, ['String']);
-		this.apiKey = apiKey;
+		testTypeInputParams('api key', apiKey, ['String']);
+		this.apiKey = apiKey;testTypeInputParams
+		return {
+			getPhoto: Flickr.prototype.getPhoto.bind(this)
+		}
 	}
 	Flickr.prototype.getPhoto = function(params, callback){
 		testTypeInputParams('params', params, ['Object']);
 		testTypeInputParams('tag', params.tag, ['String', 'Number']);
 		testTypeInputParams('page', params.page, ['Number']);
 		testTypeInputParams('perPage', params.perPage, ['Number']);
-		testTypeInputParams('cache', params.cache, ['Boolean']);
-		testTypeInputParams('format', params.format, ['String']);
 
-		ajaxGet('https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key='+this.apiKey+'&tags='+params.tag+'&per_page='+params.perPage+'&page='+params.page+'&format='+params.format, function(err, res){
+		ajax.get({
+			url: 'https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key='+this.apiKey+'&tags='+params.tag+'&per_page='+params.perPage+'&page='+params.page+'&format=json&nojsoncallback=?',
+			async: true
+		}, function(err, resJson){
 			if(err){
 				callback(err);
 			}else{
-				console.log(res);
+				try{
+					var resParse = JSON.parse(resJson);
+					if(resParse.stat === 'ok'){
+						callback(undefined, resParse);
+					}
+				}catch(e){
+					callback(e);
+					console.log(e);
+				}
 			}
 		});
 	};
-
-
-
 
 
 
@@ -31,28 +40,7 @@
 			throw new TypeError( propName + ' must be ' + resolveTypesArr.join(' or '));
 		}
 	};
-	function ajaxGet(url, callback){
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', url, true);
-		xhr.send(null);
-		xhr.onreadystatechange = function(){
-			if(xhr.readyState !== 4){
-				return;
-			}
-			if(xhr.status === 200){
-				callback(undefined, xhr.responseText);
-			}else{
-				callback({
-					status: xhr.status,
-					statusText: xhr.statusText,
-					resposneText: xhr.responseText
-				});
-			}
-		}
-		xhr.onabort = xhr.onerror = xhr.ontimeout = function(err){
-			callback(err);
-		}
-	}
+	
 	function classOf(param){
 		if(param === undefined){
 			return 'undefined';
