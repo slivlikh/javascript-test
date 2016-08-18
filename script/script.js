@@ -8,11 +8,10 @@
 		rowClass: 'row clear-fix',
 		itemClass: 'item',
 		loadNewPageOnRow: 2,
-		activeClass: 'active',
-		cache: true
+		activeClass: 'active'
 	}, function(){
 		flickr.getPhoto({
-			tag: 'test',
+			tag: 'f1',
 			page: pageCounter++,
 			perPage: 40
 		}, getPhotoCallback);
