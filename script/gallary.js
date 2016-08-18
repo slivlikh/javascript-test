@@ -1,9 +1,17 @@
 (function(){
 	 function Gallary(rootId, params, needNewPage){
+	 	this.states = {
+	 		animation: false,
+	 		loadingNewPage: false,
+	 		initialNewPage: false
+	 	};
+	 	
+	 	
+	 
 		needNewPage();
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
+		
 		this.rootId.style.top = 187 + 'px';
-
 		this.rowClass = params.rowClass;
 		this.rows = this.rootId.getElementsByClassName('row');
 		this.currentRow = 1;
@@ -15,9 +23,11 @@
 		this.lastLoadPage = 0;
 		this.currentPage = 0;
 		this.loadingNewPage = false;
+		this.initializationNewPage = false;
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.activeItemNumber = 0;
 		this.needNewPage = needNewPage; // вызывается когда нужно получить новые фото
+		this.newData = false;
 		var _this = this;
 		document.addEventListener('keydown', function(e){
 			if(_this.items.length === 0) return;
@@ -46,7 +56,7 @@
 	var move = {};
 	move.top = function(e){
 		e.preventDefault();
-		if(this.animated || (this.activeItemNumber - this.imgInRow < 0) ) return;
+		if(this.animated || (this.activeItemNumber - this.imgInRow < 0) || this.initializationNewPage) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber -= this.imgInRow;
 		this.items[this.activeItemNumber].classList.add('active');
@@ -55,7 +65,7 @@
 	};
 	move.left = function(e){
 		e.preventDefault();
-		if(this.animated || ((this.activeItemNumber - 1) < 0) ) return;
+		if(this.animated || ((this.activeItemNumber - 1) < 0) || this.initializationNewPage) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber -=1;
 		this.items[this.activeItemNumber].classList.add('active');
@@ -65,7 +75,7 @@
 		}
 	};
 	move.right = function(e){
-		if(this.animated || ((this.activeItemNumber + 1) > (this.items.length - 1)) ) return;
+		if(this.animated || ((this.activeItemNumber + 1) > (this.items.length - 1)) || this.initializationNewPage) return;
 		e.preventDefault();
 		if(this.activeItemNumber + 1 > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.loadingNewPage){ this.needNewPage(); this.loadingNewPage = true;}
 		this.items[this.activeItemNumber].classList.remove('active');
@@ -77,7 +87,9 @@
 		}
 	}
 	move.bottom = function(e){
-		if(this.animated || ((this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) ) return;
+		this.rootId.dispatchEvent(this.events.animationEnd);
+		console.log('move', 'bottom');
+		if(this.animated || ((this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) || this.initializationNewPage) return;
 		e.preventDefault();
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1  - (this.imgInRow * this.loadNewPageOnRow)) && !this.loadingNewPage){ this.needNewPage(); this.loadingNewPage = true; }	
 		this.items[this.activeItemNumber].classList.remove('active');
@@ -99,18 +111,18 @@
 			html += "</div>";
 			i--;
 		}
-		this.loadingNewPage = false;
 		if(this.lastLoadPage === 1){
 			this.rootId.insertAdjacentHTML('beforeEnd', html);
 			this.items[0].classList.add(this.activeClass);
 		}else {
+			this.initializationNewPage = true;
 			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
+			this.currentRow = 1;
 			insertPage.bottom.call(this, html);
-			var _this = this;
-			//setTimeout(function(){
-			//	removePage.top.call(_this);
-			//	_this.rootId.style.top = 187 + 'px';
-			//}, 200);			
+			this.needINsertNewDate = true;
+			if(!this.animated){
+				removePage.top.call(this);
+			}
 		}
 	}
 	var insertPage = {};
@@ -122,10 +134,17 @@
 	};
 	var removePage = {};
 	removePage.top = function(){
+		this.rootId.style.top = 187 + 'px';
+		this.needINsertNewDate = false;
 		for(var i = 0; this.removingRowsLength > i; i++){
 			this.rootId.removeChild(this.rows[0]);
 		}
 		this.activeItemNumber -= this.removingRowsLength * this.imgInRow;
+		console.log('initializationNewPage', 'false');
+		this.initializationNewPage = false;
+		this.loadingNewPage = false;
+		console.log(this.activeItemNumber);
+		console.trace();
 	};
 	removePage.bottom = function(){
 
@@ -136,13 +155,12 @@
 		  var timeFraction = (time - start) / options.duration;
 		  if (timeFraction > 1){
 		  	timeFraction = 1;
-		  	options.complete();
 		  }
-
 		  options.draw(timeFraction);
-	
 		  if (timeFraction < 1) {
 		    requestAnimationFrame(animate);
+		  }else{
+		  	options.complete();
 		  }
 		});
 	}
@@ -155,7 +173,7 @@
 			draw: function(progress){
 				_this.rootId.style.top = topCss + 384 * progress +'px';
 			},
-			duration: 500,
+			duration: 100,
 			complete: function(){
 				_this.animated = false;
 			}
@@ -170,11 +188,35 @@
 			draw: function(progress){
 				_this.rootId.style.top = topCss - 384 * progress +'px';
 			},
-			duration: 500,
+			duration: 100,
 			complete: function(){
 				_this.animated = false;
+				if(_this.needINsertNewDate){
+					removePage.top.call(_this);
+				}
 			}
 		});
 	};
+	var events = {};
+	events.endAnimation =  new CustomEvent("endAnimation", {
+		detail: {
+		  hazcheeseburger: true
+		}
+	});
+	events.endloadNewPage =  new CustomEvent("endloadNewPage", {
+		detail: {
+		  hazcheeseburger: true
+		}
+	});
+	/*events.initNewPage =  new CustomEvent("initNewPage", {
+		detail: {
+		  hazcheeseburger: true
+		}
+	});*/
+
+	this.rootId.addEventListener("cat", function(e) { 
+			console.log(e);
+		 });
+	 	
 	return window.Gallary = Gallary;
 })();
