@@ -22,18 +22,6 @@
 		initGallary.call(this, params.firstPage);
 
 		var _this = this;
-		
-
-		this.rootId.addEventListener('wheel', function(e){
-			console.log(e);
-			if(e.deltaY === -100){
-				move.top.call(_this, e);	
-			}else{
-				move.bottom.call(_this, e);
-			}
-		}, false);
-
-
 		return  this.rootId;
 	}
 	var move = {};
@@ -50,13 +38,14 @@
 		e.preventDefault();
 		if( (this.activeItemNumber - 1) < 0) return;
 		this.items[this.activeItemNumber].classList.remove('active');
-		this.activeItemNumber -=1;
+		this.activeItemNumber -= 1;
 		this.items[this.activeItemNumber].classList.add('active');
 
 		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow < this.currentRow){
 			animate.top.call(this);
+			this.currentRow = newCurrentRow;
 		}
 	};
 	move.right = function(e){
@@ -64,14 +53,14 @@
 		e.preventDefault();
 		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
 		this.items[this.activeItemNumber].classList.remove('active');
-		this.activeItemNumber +=1;
+		this.activeItemNumber += 1;
 		this.items[this.activeItemNumber].classList.add('active');
 
 		checkActiveItem.call(this);
-		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow > this.currentRow){
 			animate.bottom.call(this);
+			this.currentRow = newCurrentRow;
 		}
 	}
 	move.bottom = function(e){
@@ -162,7 +151,6 @@
 		});
 	};
 	var events = {};
-	// this.rootId.dispatchEvent(events.needNewPage);
 	events.needNewPage = new CustomEvent("needNewPage", {
 		detail: {
 		  hazcheeseburger: true
@@ -213,6 +201,15 @@
 				case 40: move.bottom.call(_this, e); break;
 			}
 		}, false);
+
+		this.rootId.addEventListener('wheel', function(e){
+			console.log(e);
+			if(e.deltaY === -100){
+				move.top.call(_this, e);	
+			}else{
+				move.bottom.call(_this, e);
+			}
+		}, false);
 		
 
 
@@ -236,26 +233,21 @@
 			html += "</div>";
 			i--;
 		}
-		if(this.lastLoadPage === 1){
-			this.rootId.insertAdjacentHTML('beforeEnd', html);
-			this.items[0].classList.add(this.activeClass);
-		}else {
 			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
-			this.currentRow = 1;
 			insertPage.bottom.call(this, html);
 			this.needINsertNewDate = true;
 			if(!this.animated){
 				//removePage.top.call(this);
 			}
-		}
+		
 		this.states.initNewPage = false;
 	}
 
 	function checkActiveItem(){
-		if(!this.states.lodingNewPage || !this.states.initNewPage){
+		if(!this.states.loadingNewPage && !this.states.initNewPage){
 			var needNewPage = this.items[this.activeItemNumber].getAttribute('data-need-new-page');
 			if(needNewPage === 'true'){
-				this.states.lodingNewPage = false;
+				this.states.loadingNewPage = true;
 				this.rootId.dispatchEvent(events.needNewPage);
 			}
 		}

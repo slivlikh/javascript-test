@@ -19,7 +19,7 @@
 			firstPage: getPrepareUrl(resJson)
 		});
 		gallary.addEventListener('needNewPage', function(){
-			
+			alert(123);
 			flickr.getPhoto({
 				tag: 'f1',
 				page: pageCounter++,
