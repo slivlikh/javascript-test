@@ -1,43 +1,28 @@
 (function(){
-	 function Gallary(rootId, params, needNewPage){
+	 function Gallary(rootId, params){
 	 	this.states = {
 	 		animation: false,
 	 		loadingNewPage: false,
-	 		initialNewPage: false
+	 		initNewPage: false
 	 	};
 	 	
-	 	
-	 
-		needNewPage();
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
-		
+		this.rootId.setPage = window.Gallary.prototype.setPage.bind(this);
 		this.rootId.style.top = 187 + 'px';
 		this.rowClass = params.rowClass;
 		this.rows = this.rootId.getElementsByClassName('row');
 		this.currentRow = 1;
 		this.itemClass = params.itemClass;
 		this.activeClass = params.activeClass;
-		this.animated = false;
 		this.imgInRow = params.imgInRow;
-		this.loadNewPageOnRow = params.loadNewPageOnRow;
 		this.lastLoadPage = 0;
-		this.currentPage = 0;
-		this.loadingNewPage = false;
-		this.initializationNewPage = false;
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.activeItemNumber = 0;
-		this.needNewPage = needNewPage; // вызывается когда нужно получить новые фото
-		this.newData = false;
+		this.loadNewPageOnRow = params.loadNewPageOnRow;
+		initGallary.call(this, params.firstPage);
+
 		var _this = this;
-		document.addEventListener('keydown', function(e){
-			if(_this.items.length === 0) return;
-			switch(e.which){
-				case 37: move.left.call(_this, e); break;
-				case 38: move.top.call(_this, e); break;
-				case 39: move.right.call(_this, e); break;
-				case 40: move.bottom.call(_this, e); break;
-			}
-		}, false);
+		
 
 		this.rootId.addEventListener('wheel', function(e){
 			console.log(e);
@@ -49,14 +34,12 @@
 		}, false);
 
 
-		return {
-			setPage: window.Gallary.prototype.setPage.bind(this)
-		};
+		return  this.rootId;
 	}
 	var move = {};
 	move.top = function(e){
 		e.preventDefault();
-		if(this.animated || (this.activeItemNumber - this.imgInRow < 0) || this.initializationNewPage) return;
+		if( (this.activeItemNumber - this.imgInRow) < 0) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber -= this.imgInRow;
 		this.items[this.activeItemNumber].classList.add('active');
@@ -65,66 +48,45 @@
 	};
 	move.left = function(e){
 		e.preventDefault();
-		if(this.animated || ((this.activeItemNumber - 1) < 0) || this.initializationNewPage) return;
+		if( (this.activeItemNumber - 1) < 0) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber -=1;
 		this.items[this.activeItemNumber].classList.add('active');
+
+		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow < this.currentRow){
 			animate.top.call(this);
 		}
 	};
 	move.right = function(e){
-		if(this.animated || ((this.activeItemNumber + 1) > (this.items.length - 1)) || this.initializationNewPage) return;
+		
 		e.preventDefault();
-		if(this.activeItemNumber + 1 > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.loadingNewPage){ this.needNewPage(); this.loadingNewPage = true;}
+		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber +=1;
 		this.items[this.activeItemNumber].classList.add('active');
+
+		checkActiveItem.call(this);
+		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow > this.currentRow){
 			animate.bottom.call(this);
 		}
 	}
 	move.bottom = function(e){
-		this.rootId.dispatchEvent(this.events.animationEnd);
-		console.log('move', 'bottom');
-		if(this.animated || ((this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) || this.initializationNewPage) return;
+		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
 		e.preventDefault();
-		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1  - (this.imgInRow * this.loadNewPageOnRow)) && !this.loadingNewPage){ this.needNewPage(); this.loadingNewPage = true; }	
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber += this.imgInRow;
 		this.items[this.activeItemNumber].classList.add('active');
+		
+		checkActiveItem.call(this);
+	
 		animate.bottom.call(this);
 		
 	}
 
-	Gallary.prototype.setPage = function(arrLinksImg){
-		this.lastLoadPage++;
-		var html = "";
-		for(var i = 0; arrLinksImg.length > i; i++){
-			html += "<div class='"+ this.rowClass +"'>";
-			for(var j = 0; this.imgInRow > j && arrLinksImg.length > i; j++){
-				html += "<div class='"+ this.itemClass +"' style='background-image: url("+ arrLinksImg[i] +")'></div>";
-				i++;
-			}
-			html += "</div>";
-			i--;
-		}
-		if(this.lastLoadPage === 1){
-			this.rootId.insertAdjacentHTML('beforeEnd', html);
-			this.items[0].classList.add(this.activeClass);
-		}else {
-			this.initializationNewPage = true;
-			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
-			this.currentRow = 1;
-			insertPage.bottom.call(this, html);
-			this.needINsertNewDate = true;
-			if(!this.animated){
-				removePage.top.call(this);
-			}
-		}
-	}
 	var insertPage = {};
 	insertPage.top = function(html){
 		
@@ -140,11 +102,7 @@
 			this.rootId.removeChild(this.rows[0]);
 		}
 		this.activeItemNumber -= this.removingRowsLength * this.imgInRow;
-		console.log('initializationNewPage', 'false');
-		this.initializationNewPage = false;
 		this.loadingNewPage = false;
-		console.log(this.activeItemNumber);
-		console.trace();
 	};
 	removePage.bottom = function(){
 
@@ -165,6 +123,7 @@
 		});
 	}
 	animate.top = function(){
+		this.states.animation = true;
 		var topCss = parseInt(this.rootId.style.top);
 		var _this = this;
 		this.animated = true;
@@ -175,11 +134,13 @@
 			},
 			duration: 100,
 			complete: function(){
-				_this.animated = false;
+				_this.states.animation = false;
+				_this.rootId.dispatchEvent(events.animationEnd);
 			}
 		});
 	};
 	animate.bottom = function(){
+		this.states.animation = true;
 		var _this = this;
 		var topCss = parseInt(this.rootId.style.top);
 		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
@@ -190,15 +151,24 @@
 			},
 			duration: 100,
 			complete: function(){
-				_this.animated = false;
+				_this.states.animation = false;
+				_this.rootId.dispatchEvent(events.animationEnd);
+				
+
 				if(_this.needINsertNewDate){
-					removePage.top.call(_this);
+					//removePage.top.call(_this);
 				}
 			}
 		});
 	};
 	var events = {};
-	events.endAnimation =  new CustomEvent("endAnimation", {
+	// this.rootId.dispatchEvent(events.needNewPage);
+	events.needNewPage = new CustomEvent("needNewPage", {
+		detail: {
+		  hazcheeseburger: true
+		}
+	});
+	events.animationEnd =  new CustomEvent("animationEnd", {
 		detail: {
 		  hazcheeseburger: true
 		}
@@ -214,9 +184,83 @@
 		}
 	});*/
 
-	this.rootId.addEventListener("cat", function(e) { 
-			console.log(e);
-		 });
+
+	function initGallary(arrLinksImg){
+		this.lastLoadPage++;
+		var html = "";
+		var needNewPageNumber = this.imgInRow * this.loadNewPageOnRow;
+		if(needNewPageNumber < this.imgInRow){
+			needNewPageNumber = this.imgInRow;
+		}
+		for(var i = 0; arrLinksImg.length > i; i++){
+			html += "<div class='"+ this.rowClass +"'>";
+			for(var j = 0; this.imgInRow > j && arrLinksImg.length > i; j++){
+				html += "<div class='"+ this.itemClass +"' data-page='"+ this.lastLoadPage +"' data-need-new-page='"+ (i >= (arrLinksImg.length - needNewPageNumber)) +"'  style='background-image: url("+ arrLinksImg[i] +")'></div>";
+				i++;
+			}
+			html += "</div>";
+			i--;
+		}
+		this.rootId.insertAdjacentHTML('beforeEnd', html);
+		this.items[0].classList.add(this.activeClass);
+		var _this = this;
+		document.addEventListener('keydown', function(e){
+			if(_this.states.animation || _this.states.initNewPage) return;
+			switch(e.which){
+				case 37: move.left.call(_this, e); break;
+				case 38: move.top.call(_this, e); break;
+				case 39: move.right.call(_this, e); break;
+				case 40: move.bottom.call(_this, e); break;
+			}
+		}, false);
+		
+
+
+	}
+	Gallary.prototype.setPage = function(arrLinksImg){
+		this.states.initNewPage = true;
+		this.states.loadingNewPage = false;
+
+		this.lastLoadPage++;
+		var html = "";
+		var needNewPageNumber = this.imgInRow * this.loadNewPageOnRow;
+		if(needNewPageNumber < this.imgInRow){
+			needNewPageNumber = this.imgInRow;
+		}
+		for(var i = 0; arrLinksImg.length > i; i++){
+			html += "<div class='"+ this.rowClass +"'>";
+			for(var j = 0; this.imgInRow > j && arrLinksImg.length > i; j++){
+				html += "<div class='"+ this.itemClass +"' data-page='"+ this.lastLoadPage +"' data-need-new-page='"+ (i >= (arrLinksImg.length - needNewPageNumber)) +"' style='background-image: url("+ arrLinksImg[i] +")'></div>";
+				i++;
+			}
+			html += "</div>";
+			i--;
+		}
+		if(this.lastLoadPage === 1){
+			this.rootId.insertAdjacentHTML('beforeEnd', html);
+			this.items[0].classList.add(this.activeClass);
+		}else {
+			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
+			this.currentRow = 1;
+			insertPage.bottom.call(this, html);
+			this.needINsertNewDate = true;
+			if(!this.animated){
+				//removePage.top.call(this);
+			}
+		}
+		this.states.initNewPage = false;
+	}
+
+	function checkActiveItem(){
+		if(!this.states.lodingNewPage || !this.states.initNewPage){
+			var needNewPage = this.items[this.activeItemNumber].getAttribute('data-need-new-page');
+			if(needNewPage === 'true'){
+				this.states.lodingNewPage = false;
+				this.rootId.dispatchEvent(events.needNewPage);
+			}
+		}
+	}
+
 	 	
 	return window.Gallary = Gallary;
 })();
