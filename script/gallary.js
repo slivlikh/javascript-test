@@ -29,18 +29,18 @@
 		e.preventDefault();
 		this.currentRow -= 1;
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
-		this.items[this.activeItemNumber].classList.remove('active');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
 		this.activeItemNumber -= this.imgInRow;
-		this.items[this.activeItemNumber].classList.add('active');
+		this.items[this.activeItemNumber].className +=' active';
 		animate.top.call(this);
 		
 	};
 	move.left = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - 1) < 0) return;
-		this.items[this.activeItemNumber].classList.remove('active');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
 		this.activeItemNumber -= 1;
-		this.items[this.activeItemNumber].classList.add('active');
+		this.items[this.activeItemNumber].className +=' active';
 
 		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
@@ -51,12 +51,12 @@
 		}
 	};
 	move.right = function(e){
-		
+		this.rootId.dispatchEvent(events.needNewPage);	
 		e.preventDefault();
 		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
-		this.items[this.activeItemNumber].classList.remove('active');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
 		this.activeItemNumber += 1;
-		this.items[this.activeItemNumber].classList.add('active');
+		this.items[this.activeItemNumber].className +=' active';
 
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
@@ -71,12 +71,11 @@
 	}
 	move.bottom = function(e){
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
-		console.log('move bottom');
 		e.preventDefault();
 		this.currentRow += 1 ;
-		this.items[this.activeItemNumber].classList.remove('active');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
 		this.activeItemNumber += this.imgInRow;
-		this.items[this.activeItemNumber].classList.add('active');
+		this.items[this.activeItemNumber].className +=' active';
 		
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
@@ -84,7 +83,6 @@
 			this.rootId.dispatchEvent(events.needNewPage);		
 		}
 		animate.bottom.call(this);
-		
 	}
 
 	var insertPage = {};
@@ -190,7 +188,7 @@
 			i--;
 		}
 		this.rootId.insertAdjacentHTML('beforeEnd', html);
-		this.items[0].classList.add(this.activeClass);
+		this.items[0].className += ' '+this.activeClass;
 		var _this = this;
 		document.addEventListener('keydown', function(e){
 			if(_this.states.animation || _this.states.initNewPage) return;
