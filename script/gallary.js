@@ -2,8 +2,8 @@
 	 function Gallary(rootId, params){
 	 	this.states = {
 	 		animation: false,
-	 		loadingNewPage: false,
-	 		initNewPage: false
+	 		initNewPage: false,
+	 		freezReqNewPage: false
 	 	};
 	 	
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
@@ -27,6 +27,7 @@
 	var move = {};
 	move.top = function(e){
 		e.preventDefault();
+		this.currentRow -= 1;
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber -= this.imgInRow;
@@ -44,6 +45,7 @@
 		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow < this.currentRow){
+			this.currentRow -= 1;
 			animate.top.call(this);
 			this.currentRow = newCurrentRow;
 		}
@@ -56,22 +58,31 @@
 		this.activeItemNumber += 1;
 		this.items[this.activeItemNumber].classList.add('active');
 
-		checkActiveItem.call(this);
+		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
+			&& !this.states.freezReqNewPage){ 
+			this.states.freezReqNewPage = true;
+			this.rootId.dispatchEvent(events.needNewPage);		
+		}
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow > this.currentRow){
+			this.currentRow += 1;
 			animate.bottom.call(this);
-			this.currentRow = newCurrentRow;
 		}
 	}
 	move.bottom = function(e){
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
+		console.log('move bottom');
 		e.preventDefault();
+		this.currentRow += 1 ;
 		this.items[this.activeItemNumber].classList.remove('active');
 		this.activeItemNumber += this.imgInRow;
 		this.items[this.activeItemNumber].classList.add('active');
 		
-		checkActiveItem.call(this);
-	
+		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
+			&& !this.states.freezReqNewPage){ 
+			this.states.freezReqNewPage = true;
+			this.rootId.dispatchEvent(events.needNewPage);		
+		}
 		animate.bottom.call(this);
 		
 	}
@@ -85,13 +96,16 @@
 	};
 	var removePage = {};
 	removePage.top = function(){
-		this.rootId.style.top = 187 + 'px';
-		this.needINsertNewDate = false;
 		for(var i = 0; this.removingRowsLength > i; i++){
 			this.rootId.removeChild(this.rows[0]);
 		}
-		this.activeItemNumber -= this.removingRowsLength * this.imgInRow;
-		this.loadingNewPage = false;
+		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
+		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
+		if(this.currentRow == 1){
+			this.rootId.style.top = 187 + 'px';	
+		}else {
+			this.rootId.style.top = 187 - ( (this.currentRow - 1) * 384) + 'px';
+		}
 	};
 	removePage.bottom = function(){
 
@@ -115,8 +129,6 @@
 		this.states.animation = true;
 		var topCss = parseInt(this.rootId.style.top);
 		var _this = this;
-		this.animated = true;
-		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		animate({
 			draw: function(progress){
 				_this.rootId.style.top = topCss + 384 * progress +'px';
@@ -132,21 +144,14 @@
 		this.states.animation = true;
 		var _this = this;
 		var topCss = parseInt(this.rootId.style.top);
-		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-		this.animated = true;
 		animate({
 			draw: function(progress){
 				_this.rootId.style.top = topCss - 384 * progress +'px';
 			},
-			duration: 100,
+			duration: 300,
 			complete: function(){
 				_this.states.animation = false;
 				_this.rootId.dispatchEvent(events.animationEnd);
-				
-
-				if(_this.needINsertNewDate){
-					//removePage.top.call(_this);
-				}
 			}
 		});
 	};
@@ -166,12 +171,7 @@
 		  hazcheeseburger: true
 		}
 	});
-	/*events.initNewPage =  new CustomEvent("initNewPage", {
-		detail: {
-		  hazcheeseburger: true
-		}
-	});*/
-
+	
 
 	function initGallary(arrLinksImg){
 		this.lastLoadPage++;
@@ -203,56 +203,54 @@
 		}, false);
 
 		this.rootId.addEventListener('wheel', function(e){
-			console.log(e);
+			if(_this.states.animation || _this.states.initNewPage) return;
 			if(e.deltaY === -100){
 				move.top.call(_this, e);	
 			}else{
 				move.bottom.call(_this, e);
 			}
 		}, false);
+
+		this.rootId.addEventListener('animationEnd', function(){
+			if( _this.newLinksArr && _this.activeItemNumber > _this.items.length - 1 - _this.imgInRow * _this.loadNewPageOnRow){
+				_this.states.initNewPage = true;
+				insertingNewPage.call(_this, _this.newLinksArr);
+				_this.newLinksArr = null;
+			}
+		});
 		
 
 
 	}
 	Gallary.prototype.setPage = function(arrLinksImg){
-		this.states.initNewPage = true;
-		this.states.loadingNewPage = false;
+		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
+		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
+			this.states.initNewPage = true;
+			insertingNewPage.call(this, arrLinksImg);
+		}else {
+			this.newLinksArr = arrLinksImg;
+		}
+	}
+	
 
+	
+	function insertingNewPage(arrLinksImg){
+		removePage.top.call(this);
 		this.lastLoadPage++;
 		var html = "";
-		var needNewPageNumber = this.imgInRow * this.loadNewPageOnRow;
-		if(needNewPageNumber < this.imgInRow){
-			needNewPageNumber = this.imgInRow;
-		}
 		for(var i = 0; arrLinksImg.length > i; i++){
 			html += "<div class='"+ this.rowClass +"'>";
 			for(var j = 0; this.imgInRow > j && arrLinksImg.length > i; j++){
-				html += "<div class='"+ this.itemClass +"' data-page='"+ this.lastLoadPage +"' data-need-new-page='"+ (i >= (arrLinksImg.length - needNewPageNumber)) +"' style='background-image: url("+ arrLinksImg[i] +")'></div>";
+				html += "<div class='"+ this.itemClass +"' data-page='"+ this.lastLoadPage +"'  style='background-image: url("+ arrLinksImg[i] +")'></div>";
 				i++;
 			}
 			html += "</div>";
 			i--;
 		}
-			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
-			insertPage.bottom.call(this, html);
-			this.needINsertNewDate = true;
-			if(!this.animated){
-				//removePage.top.call(this);
-			}
-		
+		insertPage.bottom.call(this, html);
 		this.states.initNewPage = false;
+		this.states.freezReqNewPage = false;
 	}
-
-	function checkActiveItem(){
-		if(!this.states.loadingNewPage && !this.states.initNewPage){
-			var needNewPage = this.items[this.activeItemNumber].getAttribute('data-need-new-page');
-			if(needNewPage === 'true'){
-				this.states.loadingNewPage = true;
-				this.rootId.dispatchEvent(events.needNewPage);
-			}
-		}
-	}
-
 	 	
 	return window.Gallary = Gallary;
 })();
