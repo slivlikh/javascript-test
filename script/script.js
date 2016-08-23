@@ -1,8 +1,7 @@
 (function(){
 	var flickr = new Flickr('c14283978aa157e04ec6e51b5022b185');
 	var gallary;
-	//xhr.open('GET','https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c14283978aa157e04ec6e51b5022b185&tags=test&per_page=50&page=1&format=json&nojsoncallback=?' ,true);
-	var pageCounter = 1;
+	var pageCounter = 0;
 	flickr.getPhoto({
 		tag: 'f1',
 		page: pageCounter++,
@@ -18,12 +17,13 @@
 			itemHeight: 374,
 			loadNewPageOnRow: 2,
 			activeClass: 'active',
+			anumationDuration: 300,
 			firstPage: getPrepareUrl(resJson)
 		});
 		gallary.addEventListener('needNewPage', function(){
 			flickr.getPhoto({
 				tag: 'f1',
-				page: pageCounter++,
+				page: ++pageCounter,
 				perPage: 40
 			}, getPhotoCallback);
 		}, false);

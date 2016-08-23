@@ -20,10 +20,9 @@
 		this.lastLoadPage = 0;
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.activeItemNumber = 0;
+		this.anumationDuration = params.anumationDuration;
 		this.loadNewPageOnRow = params.loadNewPageOnRow;
 		initGallary.call(this, params.firstPage);
-
-		var _this = this;
 		return  this.rootId;
 	}
 	function initGallary(arrLinksImg){
@@ -77,18 +76,18 @@
 		e.preventDefault();
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
 		this.currentRow -= 1;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= this.imgInRow;
-		this.items[this.activeItemNumber].className +=' active';
+		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 		animate.top.call(this);
 		
 	};
 	move.left = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - 1) < 0) return;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= 1;
-		this.items[this.activeItemNumber].className +=' active';
+		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 
 		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
@@ -101,9 +100,9 @@
 	move.right = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += 1;
-		this.items[this.activeItemNumber].className +=' active';
+		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
@@ -120,9 +119,9 @@
 		e.preventDefault();
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
 		this.currentRow += 1 ;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += this.imgInRow;
-		this.items[this.activeItemNumber].className +=' active';
+		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 		
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
@@ -231,7 +230,7 @@
 			draw: function(progress){
 				_this.rootId.style.top = topCss + (_this.itemHeight + _this.rowMarginBottom) * progress +'px';
 			},
-			duration: 300,
+			duration: _this.anumationDuration,
 			complete: function(){
 				_this.states.animation = false;
 				_this.rootId.dispatchEvent(events.animationEnd);
@@ -246,7 +245,7 @@
 			draw: function(progress){
 				_this.rootId.style.top = topCss - (_this.itemHeight + _this.rowMarginBottom) * progress +'px';
 			},
-			duration: 300,
+			duration: _this.anumationDuration,
 			complete: function(){
 				_this.states.animation = false;
 				_this.rootId.dispatchEvent(events.animationEnd);
