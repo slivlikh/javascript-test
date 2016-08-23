@@ -8,11 +8,13 @@
 	 	
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
 		this.rootId.setPage = window.Gallary.prototype.setPage.bind(this);
-		this.rootId.style.top = 187 + 'px';
 		this.rowClass = params.rowClass;
+		this.rowMarginBottom = params.rowMarginBottom;
 		this.rows = this.rootId.getElementsByClassName('row');
 		this.currentRow = 1;
 		this.itemClass = params.itemClass;
+		this.itemHeight = params.itemHeight;
+		this.rootId.style.top = this.itemHeight/2 + 'px';
 		this.activeClass = params.activeClass;
 		this.imgInRow = params.imgInRow;
 		this.lastLoadPage = 0;
@@ -24,153 +26,6 @@
 		var _this = this;
 		return  this.rootId;
 	}
-	var move = {};
-	move.top = function(e){
-		e.preventDefault();
-		this.currentRow -= 1;
-		if( (this.activeItemNumber - this.imgInRow) < 0) return;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
-		this.activeItemNumber -= this.imgInRow;
-		this.items[this.activeItemNumber].className +=' active';
-		animate.top.call(this);
-		
-	};
-	move.left = function(e){
-		e.preventDefault();
-		if( (this.activeItemNumber - 1) < 0) return;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
-		this.activeItemNumber -= 1;
-		this.items[this.activeItemNumber].className +=' active';
-
-		
-		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-		if(newCurrentRow < this.currentRow){
-			this.currentRow -= 1;
-			animate.top.call(this);
-			this.currentRow = newCurrentRow;
-		}
-	};
-	move.right = function(e){
-		this.rootId.dispatchEvent(events.needNewPage);	
-		e.preventDefault();
-		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
-		this.activeItemNumber += 1;
-		this.items[this.activeItemNumber].className +=' active';
-
-		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
-			&& !this.states.freezReqNewPage){ 
-			this.states.freezReqNewPage = true;
-			this.rootId.dispatchEvent(events.needNewPage);		
-		}
-		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-		if(newCurrentRow > this.currentRow){
-			this.currentRow += 1;
-			animate.bottom.call(this);
-		}
-	}
-	move.bottom = function(e){
-		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
-		e.preventDefault();
-		this.currentRow += 1 ;
-		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
-		this.activeItemNumber += this.imgInRow;
-		this.items[this.activeItemNumber].className +=' active';
-		
-		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
-			&& !this.states.freezReqNewPage){ 
-			this.states.freezReqNewPage = true;
-			this.rootId.dispatchEvent(events.needNewPage);		
-		}
-		animate.bottom.call(this);
-	}
-
-	var insertPage = {};
-	insertPage.top = function(html){
-		
-	};
-	insertPage.bottom = function(html){
-		this.rootId.insertAdjacentHTML('beforeEnd', html);
-	};
-	var removePage = {};
-	removePage.top = function(){
-		for(var i = 0; this.removingRowsLength > i; i++){
-			this.rootId.removeChild(this.rows[0]);
-		}
-		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
-		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-		if(this.currentRow == 1){
-			this.rootId.style.top = 187 + 'px';	
-		}else {
-			this.rootId.style.top = 187 - ( (this.currentRow - 1) * 384) + 'px';
-		}
-	};
-	removePage.bottom = function(){
-
-	};
-	function animate(options) {
-		var start = performance.now();
-		requestAnimationFrame(function animate(time) {
-		  var timeFraction = (time - start) / options.duration;
-		  if (timeFraction > 1){
-		  	timeFraction = 1;
-		  }
-		  options.draw(timeFraction);
-		  if (timeFraction < 1) {
-		    requestAnimationFrame(animate);
-		  }else{
-		  	options.complete();
-		  }
-		});
-	}
-	animate.top = function(){
-		this.states.animation = true;
-		var topCss = parseInt(this.rootId.style.top);
-		var _this = this;
-		animate({
-			draw: function(progress){
-				_this.rootId.style.top = topCss + 384 * progress +'px';
-			},
-			duration: 100,
-			complete: function(){
-				_this.states.animation = false;
-				_this.rootId.dispatchEvent(events.animationEnd);
-			}
-		});
-	};
-	animate.bottom = function(){
-		this.states.animation = true;
-		var _this = this;
-		var topCss = parseInt(this.rootId.style.top);
-		animate({
-			draw: function(progress){
-				_this.rootId.style.top = topCss - 384 * progress +'px';
-			},
-			duration: 300,
-			complete: function(){
-				_this.states.animation = false;
-				_this.rootId.dispatchEvent(events.animationEnd);
-			}
-		});
-	};
-	var events = {};
-	events.needNewPage = new CustomEvent("needNewPage", {
-		detail: {
-		  hazcheeseburger: true
-		}
-	});
-	events.animationEnd =  new CustomEvent("animationEnd", {
-		detail: {
-		  hazcheeseburger: true
-		}
-	});
-	events.endloadNewPage =  new CustomEvent("endloadNewPage", {
-		detail: {
-		  hazcheeseburger: true
-		}
-	});
-	
-
 	function initGallary(arrLinksImg){
 		this.lastLoadPage++;
 		var html = "";
@@ -216,10 +71,96 @@
 				_this.newLinksArr = null;
 			}
 		});
-		
-
-
 	}
+	var move = {};
+	move.top = function(e){
+		e.preventDefault();
+		if( (this.activeItemNumber - this.imgInRow) < 0) return;
+		this.currentRow -= 1;
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.activeItemNumber -= this.imgInRow;
+		this.items[this.activeItemNumber].className +=' active';
+		animate.top.call(this);
+		
+	};
+	move.left = function(e){
+		e.preventDefault();
+		if( (this.activeItemNumber - 1) < 0) return;
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.activeItemNumber -= 1;
+		this.items[this.activeItemNumber].className +=' active';
+
+		
+		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
+		if(newCurrentRow < this.currentRow){
+			this.currentRow -= 1;
+			animate.top.call(this);
+			this.currentRow = newCurrentRow;
+		}
+	};
+	move.right = function(e){
+		e.preventDefault();
+		if( (this.activeItemNumber + 1) > (this.items.length - 1)) return;
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.activeItemNumber += 1;
+		this.items[this.activeItemNumber].className +=' active';
+
+		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
+			&& !this.states.freezReqNewPage){ 
+			this.states.freezReqNewPage = true;
+			this.rootId.dispatchEvent(events.needNewPage);		
+		}
+		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
+		if(newCurrentRow > this.currentRow){
+			this.currentRow += 1;
+			animate.bottom.call(this);
+		}
+	}
+	move.bottom = function(e){
+		e.preventDefault();
+		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
+		this.currentRow += 1 ;
+		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(/active/g, '');
+		this.activeItemNumber += this.imgInRow;
+		this.items[this.activeItemNumber].className +=' active';
+		
+		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
+			&& !this.states.freezReqNewPage){ 
+			this.states.freezReqNewPage = true;
+			this.rootId.dispatchEvent(events.needNewPage);		
+		}
+		animate.bottom.call(this);
+	}
+
+	var insertPage = {};
+	insertPage.top = function(html){
+		
+	};
+	insertPage.bottom = function(html){
+		this.rootId.insertAdjacentHTML('beforeEnd', html);
+	};
+
+	var removePage = {};
+	removePage.top = function(){
+		for(var i = 0; this.removingRowsLength > i; i++){
+			this.rootId.removeChild(this.rows[0]);
+		}
+		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
+		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
+		if(this.currentRow == 1){
+			this.rootId.style.top = this.itemHeight/2 + 'px';	
+		}else {
+			this.rootId.style.top = this.itemHeight/2 - ( (this.currentRow - 1) * (this.itemHeight + this.rowMarginBottom)) + 'px';
+		}
+	};
+	removePage.bottom = function(){
+
+	};
+
+	var events = {};
+	events.needNewPage = new CustomEvent("needNewPage");
+	events.animationEnd =  new CustomEvent("animationEnd");
+	
 	Gallary.prototype.setPage = function(arrLinksImg){
 		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
@@ -249,6 +190,69 @@
 		this.states.initNewPage = false;
 		this.states.freezReqNewPage = false;
 	}
+
+
+
+
+
+	function animate(options) {
+		var requestAnimationFrame = window.requestAnimationFrame || 
+									window.mozRequestAnimationFrame ||
+                            		window.webkitRequestAnimationFrame || 
+                            		window.msRequestAnimationFrame ||
+                            		setTimeout;
+		var start;
+		if(typeof performance.now === 'function'){
+			start = performance.now();
+		}else {
+			start = Date.now();
+		}
+
+		requestAnimationFrame(function animateDrow(time) {
+		if(!time){ time = Date.now(); }
+		  var timeFraction = (time - start) / options.duration;
+		  if (timeFraction > 1){
+		  	timeFraction = 1;
+		  }
+		  options.draw(timeFraction);
+		  if (timeFraction < 1) {
+		    requestAnimationFrame(animateDrow);
+		  }else{
+		  	options.complete();
+		  }
+		}, options.duration/60);
+		
+	}
+	animate.top = function(){
+		this.states.animation = true;
+		var topCss = parseInt(this.rootId.style.top);
+		var _this = this;
+		animate({
+			draw: function(progress){
+				_this.rootId.style.top = topCss + (_this.itemHeight + _this.rowMarginBottom) * progress +'px';
+			},
+			duration: 300,
+			complete: function(){
+				_this.states.animation = false;
+				_this.rootId.dispatchEvent(events.animationEnd);
+			}
+		});
+	};
+	animate.bottom = function(){
+		this.states.animation = true;
+		var _this = this;
+		var topCss = parseInt(this.rootId.style.top);
+		animate({
+			draw: function(progress){
+				_this.rootId.style.top = topCss - (_this.itemHeight + _this.rowMarginBottom) * progress +'px';
+			},
+			duration: 300,
+			complete: function(){
+				_this.states.animation = false;
+				_this.rootId.dispatchEvent(events.animationEnd);
+			}
+		});
+	};
 	 	
-	return window.Gallary = Gallary;
+	window.Gallary = Gallary;
 })();

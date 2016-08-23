@@ -13,7 +13,9 @@
 		gallary = new Gallary('gallary', {
 			imgInRow: 5,
 			rowClass: 'row clear-fix',
+			rowMarginBottom: 10,
 			itemClass: 'item',
+			itemHeight: 374,
 			loadNewPageOnRow: 2,
 			activeClass: 'active',
 			firstPage: getPrepareUrl(resJson)
