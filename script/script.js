@@ -17,7 +17,7 @@
 			itemHeight: 374,
 			loadNewPageOnRow: 2,
 			activeClass: 'active',
-			anumationDuration: 300,
+			anumationDuration: 400,
 			firstPage: getPrepareUrl(resJson)
 		});
 		gallary.addEventListener('needBottomPage', function(){
@@ -25,14 +25,14 @@
 				tag: 'f1',
 				page: ++pageCounter,
 				perPage: 40
-			}, getPhotoCallback);
+			}, needBottomPageCallback);
 		}, false);
 		gallary.addEventListener('needTopPage', function(){
 			flickr.getPhoto({
 				tag: 'f1',
 				page: --pageCounter,
 				perPage: 40
-			}, getPhotoCallback);
+			}, needTopPageCallback);
 		}, false);
 
 	});
@@ -48,7 +48,11 @@
 		return arrUrl;
 	}
 
-	function getPhotoCallback(err, resJson){
+	function needTopPageCallback(err, resJson){
+		if(err){ alert('Во время загрузки произошла ошибка'); return; }
+		gallary.setTopPage( getPrepareUrl(resJson) );
+	}
+	function needBottomPageCallback(err, resJson){
 		if(err){ alert('Во время загрузки произошла ошибка'); return; }
 		gallary.setBottomPage( getPrepareUrl(resJson) );
 	}
