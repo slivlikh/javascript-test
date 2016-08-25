@@ -59,13 +59,13 @@
 		this.rootId.addEventListener('animationEnd', function(){
 			if( _this.newLinksArr && _this.lastLoadPagePosition === "bottom" && _this.activeItemNumber > _this.items.length - 1 - _this.imgInRow * _this.loadNewPageOnRow){
 				removePage.top.call(_this);
-				var html = prepearHtml.call(_this, arrLinksImg);
+				var html = prepearHtml.call(_this, _this.newLinksArr);
 				insertPage.bottom.call(_this, html);
 				_this.states.freezReqBottomPage = false;
 				_this.newLinksArr = null;
 			}
 			if( _this.newLinksArr && _this.lastLoadPagePosition === "top" && _this.activeItemNumber <  _this.imgInRow * _this.loadNewPageOnRow){
-				var html = prepearHtml.call(_this, arrLinksImg);
+				var html = prepearHtml.call(_this, _this.newLinksArr);
 				removePage.bottom.call(_this);
 				var currItemsLen = _this.items.length;
 				insertPage.top.call(_this, html);

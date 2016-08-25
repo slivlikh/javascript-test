@@ -17,7 +17,7 @@
 			itemHeight: 374,
 			loadNewPageOnRow: 2,
 			activeClass: 'active',
-			anumationDuration: 400,
+			anumationDuration: 300,
 			firstPage: getPrepareUrl(resJson)
 		});
 		gallary.addEventListener('needBottomPage', function(){
