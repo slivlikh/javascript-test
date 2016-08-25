@@ -137,7 +137,7 @@
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqBottomPage){ 
 			this.rootId.dispatchEvent(events.needBottomPage);		
-		}else if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow) {
+		}else if(this.activeItemNumber > this.imgInRow * this.loadNewPageOnRow) {
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
 		}
@@ -159,7 +159,7 @@
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqBottomPage){ 
 			this.rootId.dispatchEvent(events.needBottomPage);		
-		}else if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow) {
+		}else if(this.activeItemNumber > this.imgInRow * this.loadNewPageOnRow) {
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
 		}
