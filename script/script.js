@@ -4,7 +4,7 @@
 	var pageCounter = 0;
 	flickr.getPhoto({
 		tag: 'f1',
-		page: pageCounter++,
+		page: ++pageCounter,
 		perPage: 40
 	}, function(err, resJson){
 
@@ -21,9 +21,10 @@
 			firstPage: getPrepareUrl(resJson)
 		});
 		gallary.addEventListener('needBottomPage', function(){
+			console.log(++pageCounter);
 			flickr.getPhoto({
 				tag: 'f1',
-				page: ++pageCounter,
+				page: pageCounter,
 				perPage: 40
 			}, needBottomPageCallback);
 		}, false);

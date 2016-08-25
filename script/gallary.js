@@ -166,38 +166,6 @@
 		animate.bottom.call(this);
 	}
 
-	var insertPage = {};
-	insertPage.top = function(html){
-		this.rootId.insertAdjacentHTML('afterbegin', html);
-	};
-	insertPage.bottom = function(html){
-		this.rootId.insertAdjacentHTML('beforeEnd', html);
-	};
-
-	var removePage = {};
-	removePage.top = function(){
-		for(var i = 0; this.removingRowsLength > i; i++){
-			this.rootId.removeChild(this.rows[0]);
-		}
-		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
-		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-		if(this.currentRow == 1){
-			this.rootId.style.top = this.itemHeight/2 + 'px';	
-		}else {
-			this.rootId.style.top = this.itemHeight/2 - ( (this.currentRow - 1) * (this.itemHeight + this.rowMarginBottom)) + 'px';
-		}
-	};
-	removePage.bottom = function(){
-		var rowsLen = this.rows.length;
-		for(var i = this.loadNewPageOnRow; rowsLen > i; i++ ){
-			this.rootId.removeChild(this.rows[this.loadNewPageOnRow]);
-		}
-	};
-
-	var events = {};
-	events.needBottomPage = new CustomEvent("needBottomPage");
-	events.needTopPage = new CustomEvent("needTopPage");
-	events.animationEnd =  new CustomEvent("animationEnd");
 	
 	Gallary.prototype.setBottomPage = function(arrLinksImg){
 		this.lastLoadPage++;
@@ -244,7 +212,38 @@
 
 
 
+	var insertPage = {};
+	insertPage.top = function(html){
+		this.rootId.insertAdjacentHTML('afterbegin', html);
+	};
+	insertPage.bottom = function(html){
+		this.rootId.insertAdjacentHTML('beforeEnd', html);
+	};
 
+	var removePage = {};
+	removePage.top = function(){
+		for(var i = 0; this.removingRowsLength > i; i++){
+			this.rootId.removeChild(this.rows[0]);
+		}
+		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
+		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
+		if(this.currentRow == 1){
+			this.rootId.style.top = this.itemHeight/2 + 'px';	
+		}else {
+			this.rootId.style.top = this.itemHeight/2 - ( (this.currentRow - 1) * (this.itemHeight + this.rowMarginBottom)) + 'px';
+		}
+	};
+	removePage.bottom = function(){
+		var rowsLen = this.rows.length;
+		for(var i = this.loadNewPageOnRow; rowsLen > i; i++ ){
+			this.rootId.removeChild(this.rows[this.loadNewPageOnRow]);
+		}
+	};
+
+	var events = {};
+	events.needBottomPage = new CustomEvent("needBottomPage");
+	events.needTopPage = new CustomEvent("needTopPage");
+	events.animationEnd =  new CustomEvent("animationEnd");
 	
 
 	function prepearHtml(arrLinksImg){
