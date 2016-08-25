@@ -7,7 +7,7 @@
 	 	};
 	 	
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
-		this.rootId.setPage = window.Gallary.prototype.setPage.bind(this);
+		this.rootId.setBottomPage = window.Gallary.prototype.setBottomPage.bind(this);
 		this.rowClass = params.rowClass;
 		this.rowMarginBottom = params.rowMarginBottom;
 		this.rows = this.rootId.getElementsByClassName('row');
@@ -18,32 +18,26 @@
 		this.activeClass = params.activeClass;
 		this.imgInRow = params.imgInRow;
 		this.lastLoadPage = 0;
+		this.currentPage = 1;
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.activeItemNumber = 0;
 		this.anumationDuration = params.anumationDuration;
 		this.loadNewPageOnRow = params.loadNewPageOnRow;
+		this.cache = {};
 		initGallary.call(this, params.firstPage);
 		return  this.rootId;
 	}
 	function initGallary(arrLinksImg){
 		this.lastLoadPage++;
-		var html = "";
+		var html;
+		var _this = this;
 		var needNewPageNumber = this.imgInRow * this.loadNewPageOnRow;
 		if(needNewPageNumber < this.imgInRow){
 			needNewPageNumber = this.imgInRow;
 		}
-		for(var i = 0; arrLinksImg.length > i; i++){
-			html += "<div class='"+ this.rowClass +"'>";
-			for(var j = 0; this.imgInRow > j && arrLinksImg.length > i; j++){
-				html += "<div class='"+ this.itemClass +"' data-page='"+ this.lastLoadPage +"' data-need-new-page='"+ (i >= (arrLinksImg.length - needNewPageNumber)) +"'  style='background-image: url("+ arrLinksImg[i] +")'></div>";
-				i++;
-			}
-			html += "</div>";
-			i--;
-		}
+		html = prepearHtml.call(this, arrLinksImg);
 		this.rootId.insertAdjacentHTML('beforeEnd', html);
 		this.items[0].className += ' '+this.activeClass;
-		var _this = this;
 		document.addEventListener('keydown', function(e){
 			if(_this.states.animation || _this.states.initNewPage) return;
 			switch(e.which){
@@ -75,9 +69,16 @@
 	move.top = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
+
 		this.currentRow -= 1;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= this.imgInRow;
+
+		var newCurrentPage = this.items[this.activeItemNumber].getAttribute('data-page');
+		if(newCurrentPage < this.currentPage && !this.states.freezReqNewPage){
+			this.rootId.dispatchEvent(events.needTopPage);
+		}
+		this.currentPage = newCurrentPage;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 		animate.top.call(this);
 		
@@ -95,6 +96,11 @@
 			this.currentRow -= 1;
 			animate.top.call(this);
 			this.currentRow = newCurrentRow;
+			var newCurrentPage = this.items[this.activeItemNumber].getAttribute('data-page');
+			if(newCurrentPage < this.currentPage && !this.states.freezReqNewPage){
+				this.rootId.dispatchEvent(events.needTopPage);
+			}
+			this.currentPage = newCurrentPage;
 		}
 	};
 	move.right = function(e){
@@ -103,11 +109,11 @@
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += 1;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
-
+		this.currentPage = this.items[this.activeItemNumber].getAttribute('data-page');
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
 			this.states.freezReqNewPage = true;
-			this.rootId.dispatchEvent(events.needNewPage);		
+			this.rootId.dispatchEvent(events.needBottomPage);		
 		}
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow > this.currentRow){
@@ -122,11 +128,11 @@
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += this.imgInRow;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
-		
+		this.currentPage = this.items[this.activeItemNumber].getAttribute('data-page');
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqNewPage){ 
 			this.states.freezReqNewPage = true;
-			this.rootId.dispatchEvent(events.needNewPage);		
+			this.rootId.dispatchEvent(events.needBottomPage);		
 		}
 		animate.bottom.call(this);
 	}
@@ -141,8 +147,9 @@
 
 	var removePage = {};
 	removePage.top = function(){
+		var html = [];
 		for(var i = 0; this.removingRowsLength > i; i++){
-			this.rootId.removeChild(this.rows[0]);
+			html.push(this.rootId.removeChild(this.rows[0]));
 		}
 		this.activeItemNumber -= (this.removingRowsLength * this.imgInRow);
 		this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
@@ -157,10 +164,11 @@
 	};
 
 	var events = {};
-	events.needNewPage = new CustomEvent("needNewPage");
+	events.needBottomPage = new CustomEvent("needBottomPage");
+	events.needTopPage = new CustomEvent("needTopPage");
 	events.animationEnd =  new CustomEvent("animationEnd");
 	
-	Gallary.prototype.setPage = function(arrLinksImg){
+	Gallary.prototype.setBottomPage = function(arrLinksImg){
 		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
 			this.states.initNewPage = true;
@@ -175,6 +183,20 @@
 	function insertingNewPage(arrLinksImg){
 		removePage.top.call(this);
 		this.lastLoadPage++;
+		var html = prepearHtml.call(this, arrLinksImg);
+		
+		insertPage.bottom.call(this, html);
+		this.states.initNewPage = false;
+		this.states.freezReqNewPage = false;
+	}
+
+
+
+
+
+	
+
+	function prepearHtml(arrLinksImg){
 		var html = "";
 		for(var i = 0; arrLinksImg.length > i; i++){
 			html += "<div class='"+ this.rowClass +"'>";
@@ -185,16 +207,46 @@
 			html += "</div>";
 			i--;
 		}
-		insertPage.bottom.call(this, html);
-		this.states.initNewPage = false;
-		this.states.freezReqNewPage = false;
+		return html;
 	}
+	 	
 
 
 
 
 
-	function animate(options) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	 	function animate(options) {
 		var requestAnimationFrame = window.requestAnimationFrame || 
 									window.mozRequestAnimationFrame ||
                             		window.webkitRequestAnimationFrame || 
@@ -252,6 +304,5 @@
 			}
 		});
 	};
-	 	
 	window.Gallary = Gallary;
 })();

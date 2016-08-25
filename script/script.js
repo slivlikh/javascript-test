@@ -20,10 +20,17 @@
 			anumationDuration: 300,
 			firstPage: getPrepareUrl(resJson)
 		});
-		gallary.addEventListener('needNewPage', function(){
+		gallary.addEventListener('needBottomPage', function(){
 			flickr.getPhoto({
 				tag: 'f1',
 				page: ++pageCounter,
+				perPage: 40
+			}, getPhotoCallback);
+		}, false);
+		gallary.addEventListener('needTopPage', function(){
+			flickr.getPhoto({
+				tag: 'f1',
+				page: --pageCounter,
 				perPage: 40
 			}, getPhotoCallback);
 		}, false);
@@ -43,7 +50,7 @@
 
 	function getPhotoCallback(err, resJson){
 		if(err){ alert('Во время загрузки произошла ошибка'); return; }
-		gallary.setPage( getPrepareUrl(resJson) );
+		gallary.setBottomPage( getPrepareUrl(resJson) );
 	}
 
 })();
