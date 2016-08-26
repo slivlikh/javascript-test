@@ -24,6 +24,7 @@
 		this.activeItemNumber = 0;
 		this.anumationDuration = params.anumationDuration;
 		this.loadNewPageOnRow = params.loadNewPageOnRow;
+		this.loadindTopPage = 0;
 		initGallary.call(this, params.firstPage);
 		return  this.rootId;
 	}
@@ -169,6 +170,7 @@
 	
 	Gallary.prototype.setBottomPage = function(arrLinksImg){
 		this.lastLoadPage++;
+		this.loadindTopPage = 0;
 		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
 			removePage.top.call(this);
@@ -183,9 +185,10 @@
 
 	Gallary.prototype.setTopPage = function(arrLinksImg){
 		this.lastLoadPage--;
-		if(arrLinksImg.length > (this.imgInRow * this.loadNewPageOnRow) ) {
+		if(arrLinksImg.length > (this.imgInRow * this.loadNewPageOnRow) && this.loadindTopPage === 0 ) {
 			arrLinksImg.splice(-this.imgInRow * this.loadNewPageOnRow);
 		}
+		this.loadindTopPage++;
 
 		if(this.activeItemNumber < this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
 			var html = prepearHtml.call(this, arrLinksImg);
