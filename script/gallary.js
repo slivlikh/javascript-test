@@ -2,22 +2,17 @@
 	 function Gallary(rootId, params){
 	 	this.states = {
 	 		animation: false,
-	 		initNewPage: false,
 	 		freezReqBottomPage: false,
 	 		freezReqTopPage: true
 	 	};
-
 	 	this.cache = {
 	 		prevPage: [],
 	 		currentPage: [],
 	 		nextPage: []
 	 	};
-	 	
-		this.rootId = document.getElementById(rootId); // св-во от пользователя
-		
+		this.rootId = document.getElementById(rootId);
 		this.needBottomPage = params.needBottomPage;
 		this.needTopPage = params.needTopPage;
-
 		this.rootId.setBottomPage = window.Gallary.prototype.setBottomPage.bind(this);
 		this.rootId.setTopPage = window.Gallary.prototype.setTopPage.bind(this);
 		this.rowClass = params.rowClass;
@@ -34,7 +29,7 @@
 		this.activeItemNumber = 0;
 		this.anumationDuration = params.anumationDuration;
 		this.loadNewPageOnRow = params.loadNewPageOnRow;
-		this.loadindTopPage = 0;
+		this.needSpliceCacheTopPage = true;
 		initGallary.call(this, params.firstPage);
 		return  this.rootId;
 	}
@@ -47,9 +42,9 @@
 		};
 		this.cache.currentPage = arrLinksImg;
 		html = prepearHtml.call(_this, this.cache.currentPage);
-		this.needBottomPage();
-		this.rootId.insertAdjacentHTML('beforeEnd', html);
 		this.currentPage++;
+		this.needBottomPage(this.currentPage + 1);
+		this.rootId.insertAdjacentHTML('beforeEnd', html);
 		this.items[0].className += ' '+this.activeClass;
 		document.addEventListener('keydown', function(e){
 			if(_this.states.animation) return;
@@ -69,18 +64,12 @@
 				move.bottom.call(_this, e);
 			}
 		}, false);
-
-		
-		
 	}
-
-
 	var move = {};
 	move.top = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
- 
-		console.log(this.currentPage);
+
 		this.currentRow -= 1;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= this.imgInRow;	
@@ -91,8 +80,7 @@
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
 		}
-
-
+		this.states.animation = true;
 		animate.top.call(this);
 		
 	};
@@ -102,21 +90,16 @@
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= 1;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
-
-		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow < this.currentRow){
-			this.currentRow -= 1;
-			animate.top.call(this);
-			this.currentRow = newCurrentRow;
-
-			if(this.activeItemNumber  < this.imgInRow * this.loadNewPageOnRow && !this.states.freezReqTopPage){
-				this.needTopPage();
-			}else if(this.activeItemNumber  >= this.imgInRow * this.loadNewPageOnRow){
+			this.currentRow -= 1;	
+			if(this.activeItemNumber + 1  > this.imgInRow * this.loadNewPageOnRow 
+			&& this.activeItemNumber + 1 < this.items.length  - this.imgInRow * this.loadNewPageOnRow){
 				this.states.freezReqTopPage = false;
 				this.states.freezReqBottomPage = false;
 			}
-
+			this.states.animation = true;
+			animate.top.call(this);
 		}
 	};
 	move.right = function(e){
@@ -125,26 +108,22 @@
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += 1;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
-		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
-			&& !this.states.freezReqBottomPage){ 
-			_this.needBottomPage();	
-		}else if(this.activeItemNumber > this.imgInRow * this.loadNewPageOnRow) {
-			this.states.freezReqTopPage = false;
-			this.states.freezReqBottomPage = false;
-		}
-
-
+		
 		var newCurrentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
 		if(newCurrentRow > this.currentRow){
 			this.currentRow += 1;
+			if(this.activeItemNumber + 1  > this.imgInRow * this.loadNewPageOnRow 
+				&& this.activeItemNumber + 1 < this.items.length  - this.imgInRow * this.loadNewPageOnRow){
+				this.states.freezReqTopPage = false;
+				this.states.freezReqBottomPage = false;
+			}
+			this.states.animation = true;
 			animate.bottom.call(this);
 		}
 	}
 	move.bottom = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
-
-		console.log(this.currentPage);
 		this.currentRow += 1 ;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += this.imgInRow;
@@ -155,62 +134,16 @@
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
 		}
-		
+		this.states.animation = true;
 		animate.bottom.call(this);
 	}
-
-	
 	Gallary.prototype.setBottomPage = function(arrLinksImg){
-		this.loadindTopPage = 0;
 		this.cache.nextPage = arrLinksImg;
-
-
-/*
-		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
-		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
-			
-			this.states.freezReqBottomPage = false;
-		}else {
-			this.lastLoadPagePosition = 'bottom';
-			this.newLinksArr = arrLinksImg;
-		}
-
-		*/
 	}
 
 	Gallary.prototype.setTopPage = function(arrLinksImg){
 		this.cache.prevPage = arrLinksImg;
-		if(arrLinksImg.length > (this.imgInRow * this.loadNewPageOnRow) && this.loadindTopPage === 0 ) {
-			arrLinksImg.splice(-this.imgInRow * this.loadNewPageOnRow);
-		}
-		this.loadindTopPage++;
-
-
-		/*if(this.activeItemNumber < this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
-			var html = prepearHtml.call(this, arrLinksImg);
-			removePage.bottom.call(this);
-			var currItemsLen = this.items.length;
-			insertPage.top.call(this, html);
-			this.activeItemNumber = this.items.length - currItemsLen + this.activeItemNumber;
-			this.currentRow = Math.ceil( (this.activeItemNumber + 1) / this.imgInRow);
-			this.rootId.style.top = -(this.currentRow - 1) * (this.itemHeight + this.rowMarginBottom) + this.itemHeight/2 + 'px';
-			this.states.freezReqTopPage = false;
-		}else {
-			this.lastLoadPagePosition = 'top';
-			this.newLinksArr = arrLinksImg;
-		}*/
-		
 	}
-	
-
-	
-	
-		
-	
-
-
-
-
 	var insertPage = {};
 	insertPage.top = function(html){
 		this.rootId.insertAdjacentHTML('afterbegin', html);
@@ -218,7 +151,6 @@
 	insertPage.bottom = function(html){
 		this.rootId.insertAdjacentHTML('beforeEnd', html);
 	};
-
 	var removePage = {};
 	removePage.top = function(){
 		for(var i = 0; this.removingRowsLength > i; i++){
@@ -238,12 +170,7 @@
 			this.rootId.removeChild(this.rows[this.loadNewPageOnRow]);
 		}
 	};
-
-	
-	
-
 	function prepearHtml(arrLinksImg){
-		console.trace();
 		var html = "";
 		for(var i = 0; arrLinksImg.length > i; i++){
 			html += "<div class='"+ this.rowClass +"'>";
@@ -256,46 +183,6 @@
 		}
 		return html;
 	}
-	 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	var events = {};
-	events.needBottomPage = new CustomEvent("needBottomPage");
-	events.needTopPage = new CustomEvent("needTopPage");
-	events.animationEnd =  new CustomEvent("animationEnd");
-
 	 	function animate(options) {
 		var requestAnimationFrame = window.requestAnimationFrame || 
 									window.mozRequestAnimationFrame ||
@@ -308,7 +195,6 @@
 		}else {
 			start = Date.now();
 		}
-
 		requestAnimationFrame(function animateDrow(time) {
 		if(!time){ time = Date.now(); }
 		  var timeFraction = (time - start) / options.duration;
@@ -322,10 +208,8 @@
 		  	options.complete();
 		  }
 		}, options.duration/60);
-		
 	}
 	animate.top = function(){
-		this.states.animation = true;
 		var topCss = parseInt(this.rootId.style.top);
 		var _this = this;
 		animate({
@@ -334,10 +218,18 @@
 			},
 			duration: _this.anumationDuration,
 			complete: function(){
+				_this.states.animation = false;
 				if( (_this.activeItemNumber  < _this.imgInRow * _this.loadNewPageOnRow) 
 					&& _this.cache.prevPage  && _this.currentPage > 1){
+					if(_this.needSpliceCacheTopPage){
+						var copyPrevPage = _this.cache.prevPage.concat([]);
+						copyPrevPage.splice(-_this.imgInRow * _this.loadNewPageOnRow);
+						var html = prepearHtml.call(_this, copyPrevPage);
+						_this.needSpliceCacheTopPage = false;
+					}else{
+						var html = prepearHtml.call(_this, _this.cache.prevPage);
+					}
 					_this.states.freezReqBottomPage = true;
-					var html = prepearHtml.call(_this, _this.cache.prevPage);
 					removePage.bottom.call(_this);
 					var currItemsLen = _this.items.length;
 					insertPage.top.call(_this, html);
@@ -345,25 +237,17 @@
 					_this.cache.nextPage = _this.cache.currentPage;
 					_this.cache.currentPage = _this.cache.prevPage;
 					_this.cache.prevPage = null;
-					
-
 					_this.activeItemNumber = _this.items.length - currItemsLen + _this.activeItemNumber;
 					_this.currentRow = Math.ceil( (_this.activeItemNumber + 1) / _this.imgInRow);
 					_this.rootId.style.top = -(_this.currentRow - 1) * (_this.itemHeight + _this.rowMarginBottom) + _this.itemHeight/2 + 'px';
-					
-					
 					if(_this.currentPage > 1){
-						_this.needTopPage();
+						_this.needTopPage(_this.currentPage - 1);
 					}					
 				}
-
-				_this.states.animation = false;
-				//_this.rootId.dispatchEvent(events.animationEnd);
 			}
 		});
 	};
 	animate.bottom = function(){
-		this.states.animation = true;
 		var _this = this;
 		var topCss = parseInt(this.rootId.style.top);
 		animate({
@@ -373,9 +257,9 @@
 			duration: _this.anumationDuration,
 			complete: function(){
 				_this.states.animation = false;
-
 				if(_this.activeItemNumber > _this.items.length - 1 - _this.imgInRow * _this.loadNewPageOnRow
 					&& _this.cache.nextPage && !_this.states.freezReqBottomPage){
+					_this.needSpliceCacheTopPage = true;
 					_this.states.freezReqTopPage = true;
 					_this.currentPage++;
 					_this.removingRowsLength = _this.rows.length - _this.loadNewPageOnRow;
@@ -386,13 +270,10 @@
 					_this.currentRow = Math.ceil( (_this.activeItemNumber + 1) / _this.imgInRow);
 					insertPage.bottom.call(_this, html);
 					_this.cache.prevPage = _this.cache.currentPage;
-					//console.log(_this.cache.prevPage);
 					_this.cache.currentPage = _this.cache.nextPage;
 					_this.cache.nextPage = null;
-					_this.needBottomPage();
+					_this.needBottomPage(_this.currentPage + 1);
 				}
-
-				_this.rootId.dispatchEvent(events.animationEnd);
 			}
 		});
 	};

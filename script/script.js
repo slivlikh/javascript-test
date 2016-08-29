@@ -19,13 +19,20 @@
 			activeClass: 'active',
 			anumationDuration: 300,
 			firstPage: getPrepareUrl(resJson),
-			needPage: function(page){
+			needBottomPage: function(page){
 				flickr.getPhoto({
 					tag: 'f1',
 					page: page,
 					perPage: 40
-				}, needPageCallback);
+				}, needBottomPageCallback);
 			},
+			needTopPage: function(page){
+				flickr.getPhoto({
+					tag: 'f1',
+					page: page,
+					perPage: 40
+			}, 	needTopPageCallback);
+			}
 		});
 	});
 
@@ -40,12 +47,13 @@
 		return arrUrl;
 	}
 
-
-	function needPageCallback(err, resJson){
+	function needTopPageCallback(err, resJson){
 		if(err){ alert('Во время загрузки произошла ошибка'); return; }
-		gallary.setPage( getPrepareUrl(resJson) );
+		gallary.setTopPage( getPrepareUrl(resJson) );
 	}
-
-	
+	function needBottomPageCallback(err, resJson){
+		if(err){ alert('Во время загрузки произошла ошибка'); return; }
+		gallary.setBottomPage( getPrepareUrl(resJson) );
+	}
 
 })();
