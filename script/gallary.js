@@ -16,7 +16,7 @@
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
 		
 		this.needBottomPage = params.needBottomPage;
-		this.needTopPage = params.needBottomPage;
+		this.needTopPage = params.needTopPage;
 
 		this.rootId.setBottomPage = window.Gallary.prototype.setBottomPage.bind(this);
 		this.rootId.setTopPage = window.Gallary.prototype.setTopPage.bind(this);
@@ -29,7 +29,7 @@
 		this.rootId.style.top = this.itemHeight/2 + 'px';
 		this.activeClass = params.activeClass;
 		this.imgInRow = params.imgInRow;
-		this.lastLoadPage = 1;
+		this.currentPage = 0;
 		this.items = this.rootId.getElementsByClassName(this.itemClass);
 		this.activeItemNumber = 0;
 		this.anumationDuration = params.anumationDuration;
@@ -44,11 +44,12 @@
 		var needNewPageNumber = this.imgInRow * this.loadNewPageOnRow;
 		if(needNewPageNumber < this.imgInRow){
 			needNewPageNumber = this.imgInRow;
-		}
-		html = prepearHtml.call(this, arrLinksImg);
-		this.cache.currentPage = html;
+		};
+		this.cache.currentPage = arrLinksImg;
+		html = prepearHtml.call(_this, this.cache.currentPage);
 		this.needBottomPage();
 		this.rootId.insertAdjacentHTML('beforeEnd', html);
+		this.currentPage++;
 		this.items[0].className += ' '+this.activeClass;
 		document.addEventListener('keydown', function(e){
 			if(_this.states.animation) return;
@@ -69,34 +70,8 @@
 			}
 		}, false);
 
-		this.rootId.addEventListener('animationEnd', function(){
-			if( _this.newLinksArr && _this.lastLoadPagePosition === "bottom" && _this.activeItemNumber > _this.items.length - 1 - _this.imgInRow * _this.loadNewPageOnRow){
-				removePage.top.call(_this);
-				var html = prepearHtml.call(_this, _this.newLinksArr);
-				insertPage.bottom.call(_this, html);
-				_this.states.freezReqBottomPage = false;
-				_this.newLinksArr = null;
-			}
-			if( _this.newLinksArr && _this.lastLoadPagePosition === "top" && _this.activeItemNumber <  _this.imgInRow * _this.loadNewPageOnRow){
-				var html = prepearHtml.call(_this, _this.newLinksArr);
-				removePage.bottom.call(_this);
-				var currItemsLen = _this.items.length;
-				insertPage.top.call(_this, html);
-				_this.activeItemNumber = _this.items.length - currItemsLen + _this.activeItemNumber;
-				_this.currentRow = Math.ceil( (_this.activeItemNumber + 1) / _this.imgInRow);
-				_this.rootId.style.top = -(_this.currentRow - 1) * (_this.itemHeight + _this.rowMarginBottom) + _this.itemHeight/2 + 'px';
-				_this.states.freezReqTopPage = false;
-				_this.newLinksArr = null;
-			}
-		});
-		this.rootId.addEventListener('needTopPage', function(){
-			_this.states.freezReqTopPage = true;
-			_this.states.freezReqBottomPage = true;
-		});
-		this.rootId.addEventListener('needBottomPage', function(){
-			_this.states.freezReqTopPage = true;
-			_this.states.freezReqBottomPage = true;
-		});
+		
+		
 	}
 
 
@@ -104,19 +79,20 @@
 	move.top = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
-
+ 
+		console.log(this.currentPage);
 		this.currentRow -= 1;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
-		this.activeItemNumber -= this.imgInRow;
+		this.activeItemNumber -= this.imgInRow;	
+		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 
-
-		if(this.lastLoadPage !== 1 && this.activeItemNumber  < this.imgInRow * this.loadNewPageOnRow && !this.states.freezReqTopPage){
-			this.rootId.dispatchEvent(events.needTopPage);
-		}else if(this.activeItemNumber  >= this.imgInRow * this.loadNewPageOnRow){
+		if(this.activeItemNumber + 1  > this.imgInRow * this.loadNewPageOnRow 
+		&& this.activeItemNumber + 1 < this.items.length  - this.imgInRow * this.loadNewPageOnRow){
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
 		}
-		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
+
+
 		animate.top.call(this);
 		
 	};
@@ -134,8 +110,8 @@
 			animate.top.call(this);
 			this.currentRow = newCurrentRow;
 
-			if(this.lastLoadPage !== 1 && this.activeItemNumber  < this.imgInRow * this.loadNewPageOnRow && !this.states.freezReqTopPage){
-				this.rootId.dispatchEvent(events.needTopPage);
+			if(this.activeItemNumber  < this.imgInRow * this.loadNewPageOnRow && !this.states.freezReqTopPage){
+				this.needTopPage();
 			}else if(this.activeItemNumber  >= this.imgInRow * this.loadNewPageOnRow){
 				this.states.freezReqTopPage = false;
 				this.states.freezReqBottomPage = false;
@@ -151,7 +127,7 @@
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
 			&& !this.states.freezReqBottomPage){ 
-			this.rootId.dispatchEvent(events.needBottomPage);		
+			_this.needBottomPage();	
 		}else if(this.activeItemNumber > this.imgInRow * this.loadNewPageOnRow) {
 			this.states.freezReqTopPage = false;
 			this.states.freezReqBottomPage = false;
@@ -167,29 +143,26 @@
 	move.bottom = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber + this.imgInRow) > (this.items.length - 1)) return;
+
+		console.log(this.currentPage);
 		this.currentRow += 1 ;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber += this.imgInRow;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
-		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
-			&& this.cache.nextPage){
-			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
-			removePage.top.call(this);
-			insertPage.bottom.call(this, this.cache.nextPage);
-			this.cache.prevPage = this.cache.currentPage;
-			this.cache.currentPage = this.cache.nextPage;
-			this.cache.nextPage = null;
-			this.needBottomPage();
+
+		if(this.activeItemNumber + 1  > this.imgInRow * this.loadNewPageOnRow 
+		&& this.activeItemNumber + 1 < this.items.length  - this.imgInRow * this.loadNewPageOnRow){
+			this.states.freezReqTopPage = false;
+			this.states.freezReqBottomPage = false;
 		}
+		
 		animate.bottom.call(this);
 	}
 
 	
 	Gallary.prototype.setBottomPage = function(arrLinksImg){
-		this.lastLoadPage++;
 		this.loadindTopPage = 0;
-		var html = prepearHtml.call(this, arrLinksImg);
-			this.cache.nextPage = html; 
+		this.cache.nextPage = arrLinksImg;
 
 
 /*
@@ -206,13 +179,14 @@
 	}
 
 	Gallary.prototype.setTopPage = function(arrLinksImg){
-		this.lastLoadPage--;
+		this.cache.prevPage = arrLinksImg;
 		if(arrLinksImg.length > (this.imgInRow * this.loadNewPageOnRow) && this.loadindTopPage === 0 ) {
 			arrLinksImg.splice(-this.imgInRow * this.loadNewPageOnRow);
 		}
 		this.loadindTopPage++;
 
-		if(this.activeItemNumber < this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
+
+		/*if(this.activeItemNumber < this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
 			var html = prepearHtml.call(this, arrLinksImg);
 			removePage.bottom.call(this);
 			var currItemsLen = this.items.length;
@@ -224,7 +198,7 @@
 		}else {
 			this.lastLoadPagePosition = 'top';
 			this.newLinksArr = arrLinksImg;
-		}
+		}*/
 		
 	}
 	
@@ -269,6 +243,7 @@
 	
 
 	function prepearHtml(arrLinksImg){
+		console.trace();
 		var html = "";
 		for(var i = 0; arrLinksImg.length > i; i++){
 			html += "<div class='"+ this.rowClass +"'>";
@@ -359,8 +334,31 @@
 			},
 			duration: _this.anumationDuration,
 			complete: function(){
+				if( (_this.activeItemNumber  < _this.imgInRow * _this.loadNewPageOnRow) 
+					&& _this.cache.prevPage  && _this.currentPage > 1){
+					_this.states.freezReqBottomPage = true;
+					var html = prepearHtml.call(_this, _this.cache.prevPage);
+					removePage.bottom.call(_this);
+					var currItemsLen = _this.items.length;
+					insertPage.top.call(_this, html);
+					_this.currentPage--;
+					_this.cache.nextPage = _this.cache.currentPage;
+					_this.cache.currentPage = _this.cache.prevPage;
+					_this.cache.prevPage = null;
+					
+
+					_this.activeItemNumber = _this.items.length - currItemsLen + _this.activeItemNumber;
+					_this.currentRow = Math.ceil( (_this.activeItemNumber + 1) / _this.imgInRow);
+					_this.rootId.style.top = -(_this.currentRow - 1) * (_this.itemHeight + _this.rowMarginBottom) + _this.itemHeight/2 + 'px';
+					
+					
+					if(_this.currentPage > 1){
+						_this.needTopPage();
+					}					
+				}
+
 				_this.states.animation = false;
-				_this.rootId.dispatchEvent(events.animationEnd);
+				//_this.rootId.dispatchEvent(events.animationEnd);
 			}
 		});
 	};
@@ -375,6 +373,25 @@
 			duration: _this.anumationDuration,
 			complete: function(){
 				_this.states.animation = false;
+
+				if(_this.activeItemNumber > _this.items.length - 1 - _this.imgInRow * _this.loadNewPageOnRow
+					&& _this.cache.nextPage && !_this.states.freezReqBottomPage){
+					_this.states.freezReqTopPage = true;
+					_this.currentPage++;
+					_this.removingRowsLength = _this.rows.length - _this.loadNewPageOnRow;
+					removePage.top.call(_this);
+					var html = prepearHtml.call(_this, _this.cache.nextPage);
+					var currItemsLen = _this.items.length;
+					_this.activeItemNumber = _this.items.length - currItemsLen + _this.activeItemNumber;
+					_this.currentRow = Math.ceil( (_this.activeItemNumber + 1) / _this.imgInRow);
+					insertPage.bottom.call(_this, html);
+					_this.cache.prevPage = _this.cache.currentPage;
+					//console.log(_this.cache.prevPage);
+					_this.cache.currentPage = _this.cache.nextPage;
+					_this.cache.nextPage = null;
+					_this.needBottomPage();
+				}
+
 				_this.rootId.dispatchEvent(events.animationEnd);
 			}
 		});
