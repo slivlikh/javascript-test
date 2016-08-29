@@ -44,7 +44,7 @@
 		html = prepearHtml.call(_this, this.cache.currentPage);
 		this.currentPage++;
 		this.needBottomPage(this.currentPage + 1);
-		this.rootId.insertAdjacentHTML('beforeEnd', html);
+		insertPage.bottom.call(this, html);
 		this.items[0].className += ' '+this.activeClass;
 		document.addEventListener('keydown', function(e){
 			if(_this.states.animation) return;
@@ -69,7 +69,6 @@
 	move.top = function(e){
 		e.preventDefault();
 		if( (this.activeItemNumber - this.imgInRow) < 0) return;
-
 		this.currentRow -= 1;
 		this.items[this.activeItemNumber].className = this.items[this.activeItemNumber].className.replace(this.activeClass, '');
 		this.activeItemNumber -= this.imgInRow;	
