@@ -6,8 +6,18 @@
 	 		freezReqBottomPage: false,
 	 		freezReqTopPage: true
 	 	};
+
+	 	this.cache = {
+	 		prevPage: [],
+	 		currentPage: [],
+	 		nextPage: []
+	 	};
 	 	
 		this.rootId = document.getElementById(rootId); // св-во от пользователя
+		
+		this.needBottomPage = params.needBottomPage;
+		this.needTopPage = params.needBottomPage;
+
 		this.rootId.setBottomPage = window.Gallary.prototype.setBottomPage.bind(this);
 		this.rootId.setTopPage = window.Gallary.prototype.setTopPage.bind(this);
 		this.rowClass = params.rowClass;
@@ -36,6 +46,8 @@
 			needNewPageNumber = this.imgInRow;
 		}
 		html = prepearHtml.call(this, arrLinksImg);
+		this.cache.currentPage = html;
+		this.needBottomPage();
 		this.rootId.insertAdjacentHTML('beforeEnd', html);
 		this.items[0].className += ' '+this.activeClass;
 		document.addEventListener('keydown', function(e){
@@ -86,6 +98,8 @@
 			_this.states.freezReqBottomPage = true;
 		});
 	}
+
+
 	var move = {};
 	move.top = function(e){
 		e.preventDefault();
@@ -158,11 +172,14 @@
 		this.activeItemNumber += this.imgInRow;
 		this.items[this.activeItemNumber].className +=' ' + this.activeClass;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow
-			&& !this.states.freezReqBottomPage){ 
-			this.rootId.dispatchEvent(events.needBottomPage);		
-		}else if(this.activeItemNumber > this.imgInRow * this.loadNewPageOnRow) {
-			this.states.freezReqTopPage = false;
-			this.states.freezReqBottomPage = false;
+			&& this.cache.nextPage){
+			this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
+			removePage.top.call(this);
+			insertPage.bottom.call(this, this.cache.nextPage);
+			this.cache.prevPage = this.cache.currentPage;
+			this.cache.currentPage = this.cache.nextPage;
+			this.cache.nextPage = null;
+			this.needBottomPage();
 		}
 		animate.bottom.call(this);
 	}
@@ -171,16 +188,21 @@
 	Gallary.prototype.setBottomPage = function(arrLinksImg){
 		this.lastLoadPage++;
 		this.loadindTopPage = 0;
+		var html = prepearHtml.call(this, arrLinksImg);
+			this.cache.nextPage = html; 
+
+
+/*
 		this.removingRowsLength = this.rows.length - this.loadNewPageOnRow;
 		if(this.activeItemNumber > this.items.length - 1 - this.imgInRow * this.loadNewPageOnRow && !this.states.animation){
-			removePage.top.call(this);
-			var html = prepearHtml.call(this, arrLinksImg);
-			insertPage.bottom.call(this, html);
+			
 			this.states.freezReqBottomPage = false;
 		}else {
 			this.lastLoadPagePosition = 'bottom';
 			this.newLinksArr = arrLinksImg;
 		}
+
+		*/
 	}
 
 	Gallary.prototype.setTopPage = function(arrLinksImg){
@@ -243,10 +265,7 @@
 		}
 	};
 
-	var events = {};
-	events.needBottomPage = new CustomEvent("needBottomPage");
-	events.needTopPage = new CustomEvent("needTopPage");
-	events.animationEnd =  new CustomEvent("animationEnd");
+	
 	
 
 	function prepearHtml(arrLinksImg){
@@ -297,7 +316,10 @@
 
 
 
-
+	var events = {};
+	events.needBottomPage = new CustomEvent("needBottomPage");
+	events.needTopPage = new CustomEvent("needTopPage");
+	events.animationEnd =  new CustomEvent("animationEnd");
 
 	 	function animate(options) {
 		var requestAnimationFrame = window.requestAnimationFrame || 

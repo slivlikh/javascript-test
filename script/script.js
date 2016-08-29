@@ -18,24 +18,22 @@
 			loadNewPageOnRow: 2,
 			activeClass: 'active',
 			anumationDuration: 300,
-			firstPage: getPrepareUrl(resJson)
+			firstPage: getPrepareUrl(resJson),
+			needBottomPage: function(){
+				flickr.getPhoto({
+					tag: 'f1',
+					page: ++pageCounter,
+					perPage: 40
+				}, needBottomPageCallback);
+			},
+			needTopPage: function(){
+				flickr.getPhoto({
+					tag: 'f1',
+					page: --pageCounter,
+					perPage: 40
+			}, 	needTopPageCallback);
+			}
 		});
-		gallary.addEventListener('needBottomPage', function(){
-			console.log(++pageCounter);
-			flickr.getPhoto({
-				tag: 'f1',
-				page: pageCounter,
-				perPage: 40
-			}, needBottomPageCallback);
-		}, false);
-		gallary.addEventListener('needTopPage', function(){
-			flickr.getPhoto({
-				tag: 'f1',
-				page: --pageCounter,
-				perPage: 40
-			}, needTopPageCallback);
-		}, false);
-
 	});
 
 
